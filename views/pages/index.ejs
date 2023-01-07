@@ -1,0 +1,60 @@
+<head>
+  <meta charset="utf-8">
+  <script src="https://js.braintreegateway.com/web/dropin/1.33.7/js/dropin.min.js"></script>
+</head>
+<body>
+  <div id="dropin-container"></div>
+  <button id="submit-button">Request payment method</button>
+
+
+
+
+  <script>
+    var button = document.querySelector('#submit-button');
+
+    getData();
+
+    async function getData(){
+      let URL = 'http://localhost:3000/getauthkey';
+      let response= await fetch(URL);    
+      let data= await response.json();      
+      createCon(data.authkey);    
+    }
+
+
+    function createCon(key){
+      braintree.dropin.create({
+        authorization: key,
+        container: '#dropin-container'
+      }, function (createErr, instance) {
+        button.addEventListener('click', function () {
+          instance.requestPaymentMethod(function (requestPaymentMethodErr, payload) {
+            // Submit payload.nonce to your server
+            //console.log(payload.nonce);
+             send(payload.nonce);
+             button.style.display = "none";
+          });
+        });      
+      });
+    } 
+
+
+    function send(nonce)
+    {
+      fetch('http://localhost:3000/paynow', {
+        method: 'POST',
+        body: JSON.stringify({		
+          productId: 52,
+          nonceFromTheClient : nonce
+        }),
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8'
+        }
+      }).then(function (response) {
+          console.log(response);
+      }).catch(function (error) {
+        console.warn('Something went wrong.', error);
+      });
+    }
+  </script>
+</body>
